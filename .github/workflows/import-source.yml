@@ -1,0 +1,64 @@
+name: Import verified PixelOS device snapshot
+on:
+  push:
+    paths: [.github/workflows/import-source.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: source-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          lfs: false
+      - name: Import the exact source tree once
+        env:
+          SOURCE_SHA: 86de5f048b6f1a3ba3ef723aee2b9446dd872601
+        run: |
+          set -euo pipefail
+          if git cat-file -e HEAD:UPSTREAM_SOURCE.json 2>/dev/null; then
+            echo "Source already imported; no changes made."
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 https://github.com/its-hecker/pixelos_android_device_google_coral.git "$SOURCE_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
+          cp .github/workflows/import-source.yml /tmp/hecker-import-source.yml
+          git read-tree --reset "$SOURCE_SHA^{tree}"
+          mkdir -p .github/workflows
+          cp /tmp/hecker-import-source.yml .github/workflows/import-source.yml
+          cat > UPSTREAM_SOURCE.json <<'ORIGIN'
+          {
+            "repository": "its-hecker/pixelos_android_device_google_coral",
+            "revision": "86de5f048b6f1a3ba3ef723aee2b9446dd872601",
+            "import": "Exact Git tree snapshot; original file modes, symlinks and submodule pins retained",
+            "target": "coral",
+            "rom_features": "Owned by its-hecker/HeckerOS, not this hardware repository"
+          }
+          ORIGIN
+          git add .github/workflows/import-source.yml UPSTREAM_SOURCE.json
+          git rm -r --cached --ignore-unmatch camera boot_diagnostics custom_coral.mk AndroidProducts.mk
+          git show "$SOURCE_SHA:BoardConfig-common.mk" > BoardConfig-common.mk
+          python3 - <<'PYCODE'
+          from pathlib import Path
+          p = Path("BoardConfig-common.mk")
+          s = p.read_text()
+          for line in ("-include vendor/lunaris/dolby/BoardConfigDolby.mk", "include vendor/hecker/floral/motionsense/BoardConfigMotionSense.mk", "include vendor/hecker/floral/faceid/BoardConfigFaceID.mk"):
+              if s.count(line) != 1: raise SystemExit("Review changed upstream BoardConfig")
+              s = s.replace(line + "\n", "")
+          s = s.replace("# Ship Lunaris Dolby\n", "").replace("# Standalone Floral plugins; append policy without replacing the base lists.\n", "")
+          p.write_text(s)
+          PYCODE
+          git add BoardConfig-common.mk
+          git show "$SOURCE_SHA:coral/BoardConfig.mk" > coral-board.tmp
+          mkdir -p coral
+          cat coral-board.tmp > coral/BoardConfig.mk
+          printf '\n# HeckerOS owns system features and their policy.\ninclude vendor/hecker/floral/suite/rom/BoardConfig.mk\n' >> coral/BoardConfig.mk
+          git add coral/BoardConfig.mk
+          git -c user.name='HeckerOS source import' -c user.email='source-import@heckeros.local' commit -m 'Import pinned PixelOS coral device sources for HeckerOS'
+          git push origin HEAD:main
