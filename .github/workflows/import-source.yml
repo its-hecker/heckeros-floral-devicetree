@@ -30,6 +30,8 @@ jobs:
           test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA"
           cp .github/workflows/import-source.yml /tmp/hecker-import-source.yml
           git read-tree --reset "$SOURCE_SHA^{tree}"
+          # Old PixelOS import/build workflows are not enabled in the new hardware repos.
+          git rm -r --cached --ignore-unmatch .github/workflows
           mkdir -p .github/workflows
           cp /tmp/hecker-import-source.yml .github/workflows/import-source.yml
           cat > UPSTREAM_SOURCE.json <<'ORIGIN'
