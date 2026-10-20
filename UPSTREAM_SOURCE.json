@@ -1,0 +1,7 @@
+{
+  "repository": "its-hecker/pixelos_android_device_google_coral",
+  "revision": "86de5f048b6f1a3ba3ef723aee2b9446dd872601",
+  "import": "Exact Git tree snapshot; original file modes, symlinks and submodule pins retained",
+  "target": "coral",
+  "rom_features": "Owned by its-hecker/HeckerOS, not this hardware repository"
+}
