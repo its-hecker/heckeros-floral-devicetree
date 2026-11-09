@@ -153,7 +153,7 @@ $(call soong_config_set_bool,QTI_GPT_UTILS,USE_BSG_FRAMEWORK,false)
 
 # Camera
 PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.7-service-google-coral
+    android.hardware.camera.provider@2.7-service-google-flame
 
 # Characteristics
 PRODUCT_CHARACTERISTICS := nosdcard

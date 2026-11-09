@@ -15,3 +15,6 @@ TARGET_RECOVERY_UI_MARGIN_HEIGHT := 165
 
 include device/google/coral/BoardConfig-common.mk
 include vendor/google/flame/BoardConfigVendor.mk
+
+# HeckerOS owns system features and their policy.
+include vendor/hecker/floral/suite/rom/BoardConfig.mk
