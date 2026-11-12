@@ -56,8 +56,9 @@ ro.opa.eligible_device=true
 # Gralloc
 debug.gralloc.enable_fb_ubwc=1
 
-# LMKD
+# LMKD — floral_defconfig enables PSI; retain normal 6 GB memory model.
 ro.config.low_ram=false
+ro.lmk.use_psi=true
 ro.lmk.log_stats=true
 
 # Media
